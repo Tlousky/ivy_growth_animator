@@ -370,19 +370,19 @@ class LeavesAnimProperties( bpy.types.PropertyGroup ):
         build_start_frame = bpy.context.scene.BranchesAnimProperties.frame_start
 
         # Create the first keyframe where the value of the shapekey is 1 to make the leaf invisible at the beginning
-        bpy.ops.anim.change_frame(frame = build_start_frame) # Select frame for keyframe
+        bpy.context.scene.frame_set(build_start_frame) # Select frame for keyframe
         current_shape_key.value = 1                          # Set shapekey value
         current_shape_key.keyframe_insert('value')           # Insert keyframe for shapekey val
         
         # Create the keyframe where the growth begins (leaf still invisible)
         start_frame = start + duration + random.randint(0, self.delay_after_branch)
-        bpy.ops.anim.change_frame(frame = start_frame) # Select frame for keyframe
+        bpy.context.scene.frame_set(start_frame) # Select frame for keyframe
         current_shape_key.value = 1                    # Set shapekey value
         current_shape_key.keyframe_insert('value')     # Insert keyframe for shapekey val    
         
         # Create the keyframe where the growth ends (leaf at full size)
         end_frame = start_frame + random.randint(self.min_growth_length, self.max_growth_length)
-        bpy.ops.anim.change_frame(frame = end_frame)   # Select frame for keyframe
+        bpy.context.scene.frame_set(end_frame)   # Select frame for keyframe
         current_shape_key.value = 0                    # Set shapekey value
         current_shape_key.keyframe_insert('value')     # Insert keyframe for shapekey val    
 
