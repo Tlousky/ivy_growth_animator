@@ -63,34 +63,36 @@ class IvyGrowthAnimator( bpy.types.Panel ):
         LeavesAnimProperties   = context.scene.LeavesAnimProperties
 
         col = layout.column()
-        col.prop_search(          
-            obj, "BranchObject",      # Pick BranchObject out of 
-            context.scene, "objects"  # the list of objects in the scene
-            )
-        col.prop_search(          
-            obj, "LeavesObject",      # Pick LeavesObject out of 
-            context.scene, "objects"  # the list of objects in the scene
-            )
-        
-        box = layout.box()
-        col = box.operator( "object.animate_branches" )
-        col = box.operator( "object.animate_leaves"   )
-        
-        col = layout.column()
-        col.label(text="Animation Paremeters")
-        
-        box = layout.box()
-        box.label(text="Branches animation parameters"      )
-        box.prop( BranchesAnimProperties, "frame_start"     )
-        box.prop( BranchesAnimProperties, "faces_per_frame" )
-        box.prop( BranchesAnimProperties, "delay_branches"  )
-        box.prop( BranchesAnimProperties, "initial_delay"   )
-        
-        box = layout.box()
-        box.label(text="Leaves animation parameters"         )
-        box.prop( LeavesAnimProperties, "delay_after_branch" )
-        box.prop( LeavesAnimProperties, "max_growth_length"  )
-        box.prop( LeavesAnimProperties, "min_growth_length"  )
+
+        if context.object:
+            col.prop_search(          
+                obj, "BranchObject",      # Pick BranchObject out of 
+                context.scene, "objects"  # the list of objects in the scene
+                )
+            col.prop_search(          
+                obj, "LeavesObject",      # Pick LeavesObject out of 
+                context.scene, "objects"  # the list of objects in the scene
+                )
+            
+            box = layout.box()
+            col = box.operator( "object.animate_branches" )
+            col = box.operator( "object.animate_leaves"   )
+            
+            col = layout.column()
+            col.label(text="Animation Paremeters")
+            
+            box = layout.box()
+            box.label(text="Branches animation parameters"      )
+            box.prop( BranchesAnimProperties, "frame_start"     )
+            box.prop( BranchesAnimProperties, "faces_per_frame" )
+            box.prop( BranchesAnimProperties, "delay_branches"  )
+            box.prop( BranchesAnimProperties, "initial_delay"   )
+            
+            box = layout.box()
+            box.label(text="Leaves animation parameters"         )
+            box.prop( LeavesAnimProperties, "delay_after_branch" )
+            box.prop( LeavesAnimProperties, "max_growth_length"  )
+            box.prop( LeavesAnimProperties, "min_growth_length"  )
 
 # Button for animating the branches of the plant
 class AnimateBranches( bpy.types.Operator ):
