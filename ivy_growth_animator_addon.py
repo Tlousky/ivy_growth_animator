@@ -170,9 +170,17 @@ class BranchesAnimProperties( bpy.types.PropertyGroup ):
 
         # Find the first point of the ivy curve, and place the 3D curser there
         s = obj.data.splines[0]
-        if s.type == 'BEZIER':
-            first_curve_point = obj.data.splines[0].bezier_points[0].co
+        if s.type == 'BEZIER': # Sapling Tree
+            # Since a sapling curve's first spline is not necessarily the trunk
+            # I'm going to find the lowest point and use it as the base
+            coos = [ p.co for s in obj.data.splines for p in s.bezier_points ]
 
+            first_curve_point = coos[0]
+            minZ              = first_curve_point.z
+            for co in coos:
+                if co.z < minZ:
+                    minZ              = co.z
+                    first_curve_point = co
         else:
             first_curve_point = obj.data.splines[0].points[0].co  # 1st pt Coord
 
