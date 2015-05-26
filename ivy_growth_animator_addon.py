@@ -64,6 +64,7 @@ class IvyGrowthAnimator( bpy.types.Panel ):
         LeavesAnimProperties   = context.scene.LeavesAnimProperties
 
         col = layout.column()
+<<<<<<< HEAD
         col.prop_search(
             context.scene, "BranchObject",      # Pick BranchObject out of
             context.scene, "objects"  # the list of objects in the scene
@@ -92,6 +93,38 @@ class IvyGrowthAnimator( bpy.types.Panel ):
         box.prop( LeavesAnimProperties, "delay_after_branch" )
         box.prop( LeavesAnimProperties, "max_growth_length"  )
         box.prop( LeavesAnimProperties, "min_growth_length"  )
+=======
+
+        if context.object:
+            col.prop_search(
+                obj, "BranchObject",      # Pick BranchObject out of
+                context.scene, "objects"  # the list of objects in the scene
+                )
+            col.prop_search(
+                obj, "LeavesObject",      # Pick LeavesObject out of
+                context.scene, "objects"  # the list of objects in the scene
+                )
+
+            box = layout.box()
+            col = box.operator( "object.animate_branches" )
+            col = box.operator( "object.animate_leaves"   )
+
+            col = layout.column()
+            col.label(text="Animation Paremeters")
+
+            box = layout.box()
+            box.label(text="Branches animation parameters"      )
+            box.prop( BranchesAnimProperties, "frame_start"     )
+            box.prop( BranchesAnimProperties, "faces_per_frame" )
+            box.prop( BranchesAnimProperties, "delay_branches"  )
+            box.prop( BranchesAnimProperties, "initial_delay"   )
+
+            box = layout.box()
+            box.label(text="Leaves animation parameters"         )
+            box.prop( LeavesAnimProperties, "delay_after_branch" )
+            box.prop( LeavesAnimProperties, "max_growth_length"  )
+            box.prop( LeavesAnimProperties, "min_growth_length"  )
+>>>>>>> origin/master
 
 # Button for animating the branches of the plant
 class AnimateBranches( bpy.types.Operator ):
@@ -142,12 +175,20 @@ class AnimateLeaves( bpy.types.Operator ):
             print( "No object selected, exiting!" )
             return {'CANCELLED'}
 
+<<<<<<< HEAD
         ivy_objects = bpy.context.scene.BranchesAnimProperties.find_ivy_branches(
+=======
+        ivy_objects  = bpy.context.scene.BranchesAnimProperties.find_ivy_branches(
+>>>>>>> origin/master
             branches )
 
         leaves_props.animate_leaves( leaves, ivy_objects )
 
+<<<<<<< HEAD
         return {'FINISEHD'}
+=======
+        return {'FINISHED'}
+>>>>>>> origin/master
 
 class BranchesAnimProperties( bpy.types.PropertyGroup ):
 
@@ -160,17 +201,39 @@ class BranchesAnimProperties( bpy.types.PropertyGroup ):
                             and eventually splits according to loose parts
         """
 
+<<<<<<< HEAD
         ivy_obj_name = bpy.context.scene.BranchObject  # Get selected object's name
+=======
+        ivy_obj_name = bpy.context.object.BranchObject  # Get selected object's name
+>>>>>>> origin/master
 
         if ivy_obj_name == "":
             return ""
 
         obj = bpy.data.objects[ivy_obj_name]
 
+<<<<<<< HEAD
         print( "Got name: ", ivy_obj_name )
 
         # Find the first point of the ivy curve, and place the 3D curser there
         first_curve_point = obj.data.splines[0].points[0].co  # Coords of first curve point
+=======
+        # Find the first point of the ivy curve, and place the 3D curser there
+        s = obj.data.splines[0]
+        if s.type == 'BEZIER': # Sapling Tree
+            # Since a sapling curve's first spline is not necessarily the trunk
+            # I'm going to find the lowest point and use it as the base
+            coos = [ p.co for s in obj.data.splines for p in s.bezier_points ]
+
+            first_curve_point = coos[0]
+            minZ              = first_curve_point.z
+            for co in coos:
+                if co.z < minZ:
+                    minZ              = co.z
+                    first_curve_point = co
+        else:
+            first_curve_point = obj.data.splines[0].points[0].co  # 1st pt Coord
+>>>>>>> origin/master
 
         # Set the 3D cursor position to the first curve point
         # I'm creating a new vector since the point natively comes with
