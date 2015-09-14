@@ -137,12 +137,13 @@ class AnimateLeaves( bpy.types.Operator ):
         leaves_props = context.scene.LeavesAnimProperties
         leaves       = context.scene.LeavesObject
         branches     = bpy.context.scene.BranchObject
+        branchProps  = bpy.context.scene.BranchesAnimProperties
 
         if branches == "":
             print( "No object selected, exiting!" )
             return {'CANCELLED'}
 
-        ivy_objects = bpy.context.scene.BranchesAnimProperties.find_ivy_branches(
+        ivy_objects = branchProps.find_ivy_branches( branches )
 
         leaves_props.animate_leaves( leaves, ivy_objects )
 
