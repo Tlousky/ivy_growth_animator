@@ -35,9 +35,9 @@
 
 bl_info = {
     "name"        : "Ivy Growth Animator",
-    "author"      : "Tamir Lousky",
-    "version"     : (1, 0, 3),
-    "blender"     : (2, 74, 0),
+    "author"      : "Tamir Lousky && Andrej (remaster 2.74->3.2)",
+    "version"     : (1, 0, 4),
+    "blender"     : (3, 2, 0),
     "category"    : "Object",
     "location"    : "3D View >> Tools",
     "wiki_url"    : "http://bioblog3d.wordpress.com/2013/02/06/iga-is-ready/",
@@ -52,7 +52,7 @@ class IvyGrowthAnimator( bpy.types.Panel ):
     bl_label       = "Ivy Growth Animator"
     bl_category    = "Ivy Animator"
     bl_space_type  = 'VIEW_3D'
-    bl_region_type = 'TOOLS'
+    bl_region_type = 'UI'
     bl_context     = 'objectmode'
 
     # Draw panel UI elements #
@@ -62,15 +62,16 @@ class IvyGrowthAnimator( bpy.types.Panel ):
 
         BranchesAnimProperties = context.scene.BranchesAnimProperties
         LeavesAnimProperties   = context.scene.LeavesAnimProperties
+        scn = context.scene
 
         col = layout.column()
         col.prop_search(
-            context.scene, "BranchObject",      # Pick BranchObject out of
-            context.scene, "objects"  # the list of objects in the scene
+            scn, "BranchObject",      # Pick BranchObject out of
+            scn, "objects"  # the list of objects in the scene
             )
         col.prop_search(
-            context.scene, "LeavesObject",      # Pick LeavesObject out of
-            context.scene, "objects"  # the list of objects in the scene
+            scn, "LeavesObject",      # Pick LeavesObject out of
+            scn, "objects"  # the list of objects in the scene
             )
 
         box = layout.box()
@@ -82,6 +83,9 @@ class IvyGrowthAnimator( bpy.types.Panel ):
 
         box = layout.box()
         box.label(text="Branches animation parameters"      )
+
+        # col.prop_search(scn, "frame_start", scn, "objects", text="") 
+
         box.prop( BranchesAnimProperties, "frame_start"     )
         box.prop( BranchesAnimProperties, "faces_per_frame" )
         box.prop( BranchesAnimProperties, "delay_branches"  )
@@ -89,6 +93,7 @@ class IvyGrowthAnimator( bpy.types.Panel ):
 
         box = layout.box()
         box.label(text="Leaves animation parameters"         )
+
         box.prop( LeavesAnimProperties, "delay_after_branch" )
         box.prop( LeavesAnimProperties, "max_growth_length"  )
         box.prop( LeavesAnimProperties, "min_growth_length"  )
@@ -151,6 +156,30 @@ class AnimateLeaves( bpy.types.Operator ):
 
 class BranchesAnimProperties( bpy.types.PropertyGroup ):
 
+    frame_start : bpy.props.IntProperty(  # When to start animating
+        name="frame_start",               # the branches
+        description="Growth animation's start point (frame)",
+        default=1
+        )
+    faces_per_frame : bpy.props.IntProperty( # Controls the speed of the
+        name="faces_per_frame",              # animation
+        description="Speed of the animation (higher values = faster)",
+        default=4
+        )
+    delay_branches : bpy.props.IntProperty( # Frames to wait between
+        name="delay_branches",              # branches
+        description="Number of frames to wait between branch builds",
+        default=4
+        )
+    initial_delay : bpy.props.IntProperty( # Frames to wait between
+        name="initial_delay",              # before starting with branch no. 2
+        description="Number of frames to wait before animating 2nd branch",
+        default=15
+        )
+
+    modifier_name : bpy.props.StringProperty(
+        name="modifier_name", default="GROW" )
+
     def prepare_ivy_object( self, modifier_name ):
         """ function name:  prepare_ivy_object
             description:    converts the active ivy object (which must be selected) form a curve into a mesh,
@@ -187,14 +216,14 @@ class BranchesAnimProperties( bpy.types.PropertyGroup ):
         # I'm creating a new vector since the point natively comes with
         # 4 arguments instead of just xyz, and this produces an error
         # when trying to set the cursor there
-        bpy.context.scene.cursor_location = mathutils.Vector( [
+        bpy.context.scene.cursor.location = mathutils.Vector( [
             first_curve_point.x,
             first_curve_point.y,
             first_curve_point.z ] )
 
         # Select object
-        obj.select = True
-        bpy.context.scene.objects.active = obj
+        obj.select_set(True)
+        bpy.context.view_layer.objects.active = obj
 
         bpy.ops.object.convert(target='MESH')       # object to mesh
         bpy.ops.object.mode_set(mode='EDIT' )       # Go to edit mode
@@ -222,8 +251,8 @@ class BranchesAnimProperties( bpy.types.PropertyGroup ):
         ivy_objects = []
         for current_obj in bpy.data.objects:                 # browse all objects and filter out ivy branches
             if base_name in current_obj.name:                # if the object name contains the base_name
-                current_obj.data.update(calc_tessface=True)  # calculate face data so that...
-                face_count = len(current_obj.data.tessfaces) # we can obtain the total number of faces
+                current_obj.data.update()                    # calculate face data so that...
+                face_count = len(current_obj.data.polygons) # we can obtain the total number of faces
                 ivy_objects.append( {                        # add ivy object to list:
                     "name" : current_obj.name,               #   include name
                     "facecount" : face_count } )             #   and face count
@@ -268,30 +297,24 @@ class BranchesAnimProperties( bpy.types.PropertyGroup ):
 
             count += 1
 
-    frame_start = bpy.props.IntProperty(  # When to start animating
-        name="frame_start",               # the branches
-        description="Growth animation's start point (frame)",
-        default=1
-        )
-    faces_per_frame = bpy.props.IntProperty( # Controls the speed of the
-        name="faces_per_frame",              # animation
-        description="Speed of the animation (higher values = faster)",
-        default=4
-        )
-    delay_branches = bpy.props.IntProperty( # Frames to wait between
-        name="delay_branches",              # branches
-        description="Number of frames to wait between branch builds",
-        default=4
-        )
-    initial_delay = bpy.props.IntProperty( # Frames to wait between
-        name="initial_delay",              # before starting with branch no. 2
-        description="Number of frames to wait before animating 2nd branch",
-        default=15
-        )
-    modifier_name = bpy.props.StringProperty(
-        name="modifier_name", default="GROW" )
-
 class LeavesAnimProperties( bpy.types.PropertyGroup ):
+
+    # Leaf Animation Properties
+    delay_after_branch : bpy.props.IntProperty(  # No. of frames to wait after
+        name="delay_after_branch",               # closest branch finished
+        description="Frames to wait before animating leaf after closest branch finished animating",
+        default=10
+        )
+    max_growth_length : bpy.props.IntProperty(  # Maximum growth animation length
+        name="max_growth_length",
+        description="Maximum length for the growth animation of a leaf",
+        default=25
+        )
+    min_growth_length : bpy.props.IntProperty(  # Minimum growth animation length
+        name="min_growth_length",
+        description="Minimum length for the growth animation of a leaf",
+        default=10
+        )
 
     def find_nearest_face_on_mesh( self, mesh_obj, coordinates):
         """ function name:  find_nearest_face_on_mesh
@@ -302,10 +325,10 @@ class LeavesAnimProperties( bpy.types.PropertyGroup ):
             return value:   The smallest distance between any of the mesh's faces and the coordinates
         """
 
-        mesh_obj.data.update( calc_tessface=True )
+        mesh_obj.data.update()
         distances = []
-        for face in mesh_obj.data.tessfaces:
-            pt1 = face.center * mesh_obj.matrix_world # convert to global coordinates
+        for face in mesh_obj.data.polygons:
+            pt1 = face.center @ mesh_obj.matrix_world # convert to global coordinates
             pt2 = coordinates
             distance = abs(pt1.x - pt2.x) + abs(pt1.y - pt2.y) + abs(pt1.z - pt2.z)
             distances.append(distance)
@@ -362,13 +385,13 @@ class LeavesAnimProperties( bpy.types.PropertyGroup ):
             type='VERT')
         bpy.ops.mesh.select_all(action='DESELECT')          # Deselect all verts
         bpy.ops.object.mode_set(mode = 'OBJECT')            # Go back to object mode
-        bpy.context.object.data.update(calc_tessface=True)  # Calculate the face data again
+        bpy.context.object.data.update()  # Calculate the face data again
 
         # select face vertices
         idxmin = 0
-        length = len(bpy.context.object.data.tessfaces[leaf_idx].vertices)
+        length = len(bpy.context.object.data.polygons[leaf_idx].vertices)
         for i in range(idxmin, length):
-            vert_index = bpy.context.object.data.tessfaces[leaf_idx].vertices[i]
+            vert_index = bpy.context.object.data.polygons[leaf_idx].vertices[i]
             bpy.context.object.data.vertices[vert_index].select = True
 
         bpy.ops.object.mode_set(mode = 'EDIT')    # edit mode to edit face
@@ -388,13 +411,13 @@ class LeavesAnimProperties( bpy.types.PropertyGroup ):
 
         # Create the keyframe where the growth begins (leaf still invisible)
         start_frame = start + duration + random.randint(0, self.delay_after_branch)
-        bpy.context.scene.frame_set(start_frame) # Select frame for keyframe
+        bpy.context.scene.frame_set(int(start_frame)) # Select frame for keyframe
         current_shape_key.value = 1                    # Set shapekey value
         current_shape_key.keyframe_insert('value')     # Insert keyframe for shapekey val
 
         # Create the keyframe where the growth ends (leaf at full size)
         end_frame = start_frame + random.randint(self.min_growth_length, self.max_growth_length)
-        bpy.context.scene.frame_set(end_frame)   # Select frame for keyframe
+        bpy.context.scene.frame_set(int(end_frame))   # Select frame for keyframe
         current_shape_key.value = 0                    # Set shapekey value
         current_shape_key.keyframe_insert('value')     # Insert keyframe for shapekey val
 
@@ -407,14 +430,14 @@ class LeavesAnimProperties( bpy.types.PropertyGroup ):
                             to create and animate shapekeys where this leaf grows gradually
         """
         leaves = bpy.data.objects[leaves_object_name]
-        leaves.select = True                       # Select leaves object
-        bpy.context.scene.objects.active = leaves  # Make leaves the active object in the scene
+        leaves.select_set(True)                    # Select leaves object
+        bpy.context.view_layer.objects.active = leaves  # Make leaves the active object in the scene
 
         bpy.ops.object.shape_key_add(from_mix=False) # Create the first, base shapekey
-        leaves.data.update(calc_tessface=True)       # Calculate the face data
+        leaves.data.update()       # Calculate the face data
 
         leaf_indices = []
-        for leaf in leaves.data.tessfaces:
+        for leaf in leaves.data.polygons:
             leaf_indices.append(leaf.index)
 
         worldmatrix = leaves.matrix_world
@@ -422,39 +445,34 @@ class LeavesAnimProperties( bpy.types.PropertyGroup ):
 
         modifier_name = branch_props.modifier_name
 
-        for index in leaf_indices:
-            leaves.data.update(calc_tessface=True)                                   # Calculate the face data
-            leaf_center_pos_glob = leaves.data.tessfaces[index].center * worldmatrix # Get the global coordinates of this leaf's center
+        for i, index in enumerate(leaf_indices, 1):
+            leaves.data.update()                                   # Calculate the face data
+            leaf_center_pos_glob = leaves.data.polygons[index].center @ worldmatrix # Get the global coordinates of this leaf's center
             branch     = self.find_nearest_branch(ivy_objects, leaf_center_pos_glob)      # Find closest branch to this leaf
             branch_obj = bpy.data.objects[branch["name"]]
             start      = branch_obj.modifiers[modifier_name].frame_start             # Get start frame for this branch's build modifier
             duration   = branch_obj.modifiers[modifier_name].frame_duration          # And the modifier's duration
+            print(f'Ivy_growth_generator: leaves progress - {i}/{len(leaf_indices)}')
             self.create_shapekey( leaves, index, start, duration)                         # Create a shapekey for this leaf
 
-    # Leaf Animation Properties
-    delay_after_branch = bpy.props.IntProperty(  # No. of frames to wait after
-        name="delay_after_branch",               # closest branch finished
-        description="Frames to wait before animating leaf after closest branch finished animating",
-        default=10
-        )
-    max_growth_length = bpy.props.IntProperty(  # Maximum growth animation length
-        name="max_growth_length",
-        description="Maximum length for the growth animation of a leaf",
-        default=25
-        )
-    min_growth_length = bpy.props.IntProperty(  # Minimum growth animation length
-        name="min_growth_length",
-        description="Minimum length for the growth animation of a leaf",
-        default=10
-        )
+
+classes = (
+    IvyGrowthAnimator,
+    BranchesAnimProperties,
+    LeavesAnimProperties,
+    AnimateLeaves,
+    AnimateBranches
+)
 
 def register():
-    bpy.utils.register_module(__name__)
+    for cls in classes:
+        bpy.utils.register_class(cls)
+
     # Create poperties for branch and leaf object selection boxes (in the panel)
     bpy.types.Scene.BranchObject = bpy.props.StringProperty()
     bpy.types.Scene.LeavesObject = bpy.props.StringProperty()
     bpy.types.Scene.BranchesAnimProperties = bpy.props.PointerProperty(type=BranchesAnimProperties)
-    bpy.types.Scene.LeavesAnimProperties   = bpy.props.PointerProperty(type=LeavesAnimProperties  )
+    bpy.types.Scene.LeavesAnimProperties   = bpy.props.PointerProperty(type=LeavesAnimProperties)
 
 def unregister():
     bpy.utils.unregister_module(__name__)
